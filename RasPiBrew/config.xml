@@ -14,9 +14,19 @@
 	<!-- for heat, otherwise the temperature sensor is only for temp readout -->
 	<!-- Repeat same element names (Temp_Sensor_Id and optional Heat_Pin) for additional temp sensors -->
 	<!-- Currently limited to 3 temp sensors but that can easily be expanded in raspibrew.py -->
-	<Temp_Sensor_Id>28-0000037eb5c0</Temp_Sensor_Id>
-	<Heat_Pin>26</Heat_Pin>
-	<Temp_Sensor_Id>28-0000037ec2b1</Temp_Sensor_Id>
+	<Temp_Sensor>
+		<!-- Temperature Sensor Id -->
+		<!-- For Temp Control the Temp_Sensor_Id must have a corresponding GPIO Pin used -->
+		<!-- for heat, otherwise the temperature sensor is only for temp readout -->
+		<!-- Repeat same element names (Temp_Sensor_Id and optional Heat_Pin) for additional temp sensors -->
+		<!-- Currently limited to 3 temp sensors but that can easily be expanded in raspibrew.py -->
+		<Temp_Sensor_Id>0000037ec2b1</Temp_Sensor_Id>
+		<Heat_Pin>26</Heat_Pin>
+		<!-- 1-Wire sensor type DS18B20 or AM2301 (DH21) -->
+		<Temp_Sensor_Type>AM2301</Temp_Sensor_Type>
+		<!-- When using AM2301 you should specify port of DATA(yellow) connection -->
+		<Temp_Sensor_Pin>22</Temp_Sensor_Pin>
+	</Temp_Sensor>
 	<!-- If your relay board work inverted mode set to 1 -->
 	<GPIO_Inverted>0</GPIO_Inverted>
 	<!-- Up to 2 GPIO pins are supported but can easily be expanded in code-->
@@ -26,4 +36,5 @@
 	<!-- Units C (Celsius) or F (Fahrenheit) -->
 	<!-- Note: Default is F for Android app which can switch between F and C-->
 	<Temp_Units>C</Temp_Units>
+
 </Config>
