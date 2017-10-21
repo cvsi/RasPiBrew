@@ -232,51 +232,53 @@ def getonofftime(cycle_time, duty_cycle):
     on_time = cycle_time*(duty)
     off_time = cycle_time*(1.0-duty)   
     return [on_time, off_time]
-        
+
+
 # Stand Alone Heat Process using I2C (optional)
 def heatProcI2C(cycle_time, duty_cycle, conn):
     p = current_process()
     print('Starting:', p.name, p.pid)
     bus = SMBus(0)
-    bus.write_byte_data(0x26,0x00,0x00) #set I/0 to write
-    while (True):
-        while (conn.poll()): #get last
+    bus.write_byte_data(0x26, 0x00, 0x00)  # set I/0 to write
+    while True:
+        while conn.poll():  # get last
             cycle_time, duty_cycle = conn.recv()
-        conn.send([cycle_time, duty_cycle])  
+        conn.send([cycle_time, duty_cycle])
         if duty_cycle == 0:
-            bus.write_byte_data(0x26,0x09,0x00)
+            bus.write_byte_data(0x26, 0x09, 0x00)
             time.sleep(cycle_time)
         elif duty_cycle == 100:
-            bus.write_byte_data(0x26,0x09,0x01)
+            bus.write_byte_data(0x26, 0x09, 0x01)
             time.sleep(cycle_time)
         else:
             on_time, off_time = getonofftime(cycle_time, duty_cycle)
-            bus.write_byte_data(0x26,0x09,0x01)
+            bus.write_byte_data(0x26, 0x09, 0x01)
             time.sleep(on_time)
-            bus.write_byte_data(0x26,0x09,0x00)
+            bus.write_byte_data(0x26, 0x09, 0x00)
             time.sleep(off_time)
 
+
 # Stand Alone Heat Process using GPIO
-def heatProcGPIO(cycle_time, duty_cycle, pinNum, conn):
+def heatProcGPIO(cycle_time, duty_cycle, pin_num, conn):
     p = current_process()
     print('Starting:', p.name, p.pid)
-    if pinNum > 0:
-        GPIO.setup(pinNum, GPIO.OUT)
-        while (True):
-            while (conn.poll()): #get last
+    if pin_num > 0:
+        GPIO.setup(pin_num, GPIO.OUT)
+        while True:
+            while conn.poll():  # get last
                 cycle_time, duty_cycle = conn.recv()
-            conn.send([cycle_time, duty_cycle])  
+            conn.send([cycle_time, duty_cycle])
             if duty_cycle == 0:
-                GPIO.output(pinNum, OFF)
+                GPIO.output(pin_num, OFF)
                 time.sleep(cycle_time)
             elif duty_cycle == 100:
-                GPIO.output(pinNum, ON)
+                GPIO.output(pin_num, ON)
                 time.sleep(cycle_time)
             else:
                 on_time, off_time = getonofftime(cycle_time, duty_cycle)
-                GPIO.output(pinNum, ON)
+                GPIO.output(pin_num, ON)
                 time.sleep(on_time)
-                GPIO.output(pinNum, OFF)
+                GPIO.output(pin_num, OFF)
                 time.sleep(off_time)
 
 def unPackParamInitAndPost(paramStatus):
@@ -296,14 +298,16 @@ def unPackParamInitAndPost(paramStatus):
     
     return mode, cycle_time, duty_cycle, boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, \
            k_param, i_param, d_param
-           
-def packParamGet(numTempSensors, myTempSensorNum, temp, tempUnits, elapsed, mode, cycle_time, duty_cycle, boil_duty_cycle, set_point, \
-                                 boil_manage_temp, num_pnts_smooth, k_param, i_param, d_param):
+
+
+def packParamGet(temp_sensor_number, my_temp_sensor_num, temp, temperature_units, elapsed,
+                 mode, cycle_time, duty_cycle, boil_duty_cycle, set_point,
+                 boil_manage_temp, num_pnts_smooth, k_param, i_param, d_param):
     
-    param.status["numTempSensors"] = numTempSensors
-    param.status["myTempSensorNum"] = myTempSensorNum
+    param.status["numTempSensors"] = temp_sensor_number
+    param.status["myTempSensorNum"] = my_temp_sensor_num
     param.status["temp"] = temp
-    param.status["tempUnits"] = tempUnits
+    param.status["tempUnits"] = temperature_units
     param.status["elapsed"] = elapsed
     param.status["mode"] = mode
     param.status["cycle_time"] = cycle_time
@@ -317,12 +321,13 @@ def packParamGet(numTempSensors, myTempSensorNum, temp, tempUnits, elapsed, mode
     param.status["d_param"] = d_param
 
     return param.status
-        
+
+
 # Main Temperature Control Process
-def tempControlProc(temperature_sensor, display, pinNum, readOnly, paramStatus, status_queue, conn):
+def tempControlProc(temperature_sensor, display, pin_number, read_only, param_status, status_queue, conn):
     
         mode, cycle_time, duty_cycle, boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, \
-        k_param, i_param, d_param = unPackParamInitAndPost(paramStatus)
+        k_param, i_param, d_param = unPackParamInitAndPost(param_status)
     
         p = current_process()
         print('Starting:', p.name, p.pid)
@@ -337,7 +342,7 @@ def tempControlProc(temperature_sensor, display, pinNum, readOnly, paramStatus, 
         # Pipe to communicate with "Heat Process"
         parent_conn_heat, child_conn_heat = Pipe()    
         # Start Heat Process
-        pheat = Process(name="heatProcGPIO", target=heatProcGPIO, args=(cycle_time, duty_cycle, pinNum, child_conn_heat))
+        pheat = Process(name="heatProcGPIO", target=heatProcGPIO, args=(cycle_time, duty_cycle, pin_number, child_conn_heat))
         pheat.daemon = True
         pheat.start() 
 
@@ -414,11 +419,11 @@ def tempControlProc(temperature_sensor, display, pinNum, readOnly, paramStatus, 
 
                 # put current status in queue
                 try:
-                    paramStatus = packParamGet(numTempSensors, temperature_sensor.id, temp_str,
-                                               tempUnits, elapsed, mode, cycle_time, duty_cycle,
-                                               boil_duty_cycle, set_point, boil_manage_temp,
-                                               num_pnts_smooth, k_param, i_param, d_param)
-                    statusQ.put(paramStatus) # GET request
+                    param_status = packParamGet(numTempSensors, temperature_sensor.id, temp_str,
+                                                tempUnits, elapsed, mode, cycle_time, duty_cycle,
+                                                boil_duty_cycle, set_point, boil_manage_temp,
+                                                num_pnts_smooth, k_param, i_param, d_param)
+                    statusQ.put(param_status) # GET request
                 except Full:
                     pass
 
@@ -433,7 +438,7 @@ def tempControlProc(temperature_sensor, display, pinNum, readOnly, paramStatus, 
                 readytemp = False
 
                 #if only reading temperature (no temp control)
-                if readOnly:
+                if read_only:
                     continue
 
             while parent_conn_heat.poll(): #Poll Heat Process Pipe
@@ -443,11 +448,11 @@ def tempControlProc(temperature_sensor, display, pinNum, readOnly, paramStatus, 
 
             readyPOST = False
             while conn.poll(): #POST settings - Received POST from web browser or Android device
-                paramStatus = conn.recv()
+                param_status = conn.recv()
                 mode, cycle_time, duty_cycle_temp, boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, \
-                k_param, i_param, d_param = unPackParamInitAndPost(paramStatus)
-
+                k_param, i_param, d_param = unPackParamInitAndPost(param_status)
                 readyPOST = True
+
             if readyPOST == True:
                 if mode == "auto":
                     display.showAutoMode(set_point)
@@ -504,6 +509,7 @@ def start_control_proceses(sensor_list):
                     args=(temperature_sensor, display, pinNum, False,
                           param.status, status_queue, child_conn))
         p.start()
+
 
 if __name__ == '__main__':
 
