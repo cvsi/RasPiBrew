@@ -21,7 +21,7 @@
 
 
 from multiprocessing import Process, Pipe, Queue, current_process
-from queue import Full
+from Queue import Full
 from subprocess import Popen, PIPE, call
 from datetime import datetime
 import time, random, serial, os
@@ -34,6 +34,8 @@ from flask import Flask, render_template, request, jsonify
 
 import Temp1Wire
 import Display
+from Adafruit_Python_DHT import Adafruit_DHT
+
 
 global parent_conn, parent_connB, parent_connC, statusQ, statusQ_B, statusQ_C
 global xml_root, template_name, pinHeatList, pinGPIOList
@@ -185,10 +187,10 @@ def gettempProc(conn, myTempSensor):
     
     while (True):
         t = time.time()
-        time.sleep(.5) #.1+~.83 = ~1.33 seconds
-        num = myTempSensor.readTempC()
+        time.sleep(1.9) #.1+~.83 = ~1.33 seconds
+        humiditi, temp = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302,'22')
         elapsed = "%.2f" % (time.time() - t)
-        conn.send([num, myTempSensor.sensorNum, elapsed])
+        conn.send([temp, myTempSensor.sensorNum, elapsed])
         
 #Get time heating element is on and off during a set cycle time
 def getonofftime(cycle_time, duty_cycle):
