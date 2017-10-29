@@ -286,6 +286,7 @@ function waitForMsg() {
 			jQuery('#k_paramResponse').html(data.k_param);
 			jQuery('#i_paramResponse').html(data.i_param);
 			jQuery('#d_paramResponse').html(data.d_param);
+			jQuery('#is_cooling_response').html(data.is_cooling);
 
 			//gaugeDisplay.setValue(parseFloat(data.temp));
 
@@ -331,6 +332,7 @@ function waitForMsg() {
 				jQuery('#k_paramResponse2').html(data.k_param);
 				jQuery('#i_paramResponse2').html(data.i_param);
 				jQuery('#d_paramResponse2').html(data.d_param);
+				jQuery('#is_cooling_response_2').html(data.is_cooling);
 
 				storeData(1, data);
 
@@ -373,6 +375,7 @@ function waitForMsg() {
 				jQuery('#k_paramResponse3').html(data.k_param);
 				jQuery('#i_paramResponse3').html(data.i_param);
 				jQuery('#d_paramResponse3').html(data.d_param);
+				jQuery('#is_cooling_response_3').html(data.is_cooling);
 
 				storeData(2, data);
 

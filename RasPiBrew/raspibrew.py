@@ -60,7 +60,8 @@ class param:
         "num_pnts_smooth" : 5,
         "k_param" : 44,
         "i_param" : 165,
-        "d_param" : 4             
+        "d_param" : 4,
+        "is_cooling": False
     }
                       
 # main web page    
@@ -85,6 +86,10 @@ def index():
         param.status["k_param"] = float(request.form["k"])
         param.status["i_param"] = float(request.form["i"])
         param.status["d_param"] = float(request.form["d"])
+        if "is_cooling" in request.form:
+            param.status["is_cooling"] = True
+        else:
+            param.status["is_cooling"] = False
                 
         #send to main temp control process 
         #if did not receive variable key value in POST, the param class default is used
@@ -105,6 +110,10 @@ def postparams(sensorNum=None):
     param.status["k_param"] = float(request.form["k"])
     param.status["i_param"] = float(request.form["i"])
     param.status["d_param"] = float(request.form["d"])
+    if "is_cooling" in request.form:
+        param.status["is_cooling"] = True
+    else:
+        param.status["is_cooling"] = False
             
     #send to main temp control process 
     #if did not receive variable key value in POST, the param class default is used
