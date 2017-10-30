@@ -324,7 +324,8 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
         pcold.start()
 
 
-temp_ma_list = []
+        temp_ma_list = []
+
         manage_boil_trigger = False
 
         tempUnits = xml_root.find('Temp_Units').text.strip()
@@ -334,7 +335,7 @@ temp_ma_list = []
 
         temp_ma = 0.0
 
-	#overwrite log file for new data log
+    #overwrite log file for new data log
         ff = open("brewery" + str(myTempSensor.sensorNum) + ".csv", "wb")
         ff.close()
 
@@ -511,15 +512,15 @@ if __name__ == '__main__':
     if gpioNumberingScheme == "BOARD":
         GPIO.setmode(GPIO.BOARD)
     else:
-	GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BCM)
 
     gpioInverted = xml_root.find('GPIO_Inverted').text.strip()
     if gpioInverted == "0":
-	ON = 1
-	OFF = 0
+        ON = 1
+        OFF = 0
     else:
-	ON = 0
-	OFF = 1
+        ON = 0
+        OFF = 1
 
 
     pinHeatList=[]
