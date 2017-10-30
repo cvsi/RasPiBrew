@@ -311,20 +311,12 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
         ptemp.daemon = True
         ptemp.start()   
 
-        #Pipe to communicate with "Heat Process"
+        #Pipe to communicate with "Heat/Cool Process"
         parent_conn_heat, child_conn_heat = Pipe()    
-        #Start Heat Process      
+        #Start Heat/Cool Process
         pheat = Process(name = "heatProcGPIO", target=heatProcGPIO, args=(cycle_time, duty_cycle, pinNum, child_conn_heat))
         pheat.daemon = True
         pheat.start()
-
-        parent_conn_cold, child_conn_cold = Pipe()
-        # Start Heat Process
-        pcold = Process(name="coldProcGPIO", target=heatProcGPIO,
-                        args=(cycle_time, duty_cycle, pinNum, child_conn_cold))
-        pcold.daemon = True
-        pcold.start()
-
 
         temp_ma_list = []
 
@@ -390,7 +382,6 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
                         duty_cycle = pid.calcPID_reg4(temp_ma, set_point, True)
                         #send to heat process every cycle
                         parent_conn_heat.send([cycle_time, duty_cycle])
-                        parent_conn_cold.send([cycle_time, duty_cycle])
                         readyPIDcalc = False
                     
                 if mode == "boil":
@@ -398,7 +389,6 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
                         manage_boil_trigger = False
                         duty_cycle = boil_duty_cycle
                         parent_conn_heat.send([cycle_time, duty_cycle])
-                    parent_conn_cold.send([cycle_time, duty_cycle])
 
                 #put current status in queue
                 try:
@@ -427,10 +417,6 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
                 display.showDutyCycle(duty_cycle)
                 readyPIDcalc = True
 
-            while parent_conn_cold.poll(): #Poll Heat Process Pipe
-                cycle_time, duty_cycle = parent_conn_cold.recv() #non blocking receive from Heat Process
-                display.showDutyCycle(duty_cycle)
-                readyPIDcalc = True
 
             readyPOST = False
             while conn.poll(): #POST settings - Received POST from web browser or Android device
@@ -443,10 +429,14 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
                 if mode == "auto":
                     display.showAutoMode(set_point)
                     print("auto selected")
+                    print("Initializing PID... ")
+                    if is_cooling:
+                        print("in cooling mode.")
+                    else:
+                        print("in heating mode.")
                     pid = PIDController.pidpy(cycle_time, k_param, i_param, d_param) #init pid
                     duty_cycle = pid.calcPID_reg4(temp_ma, set_point, True)
                     parent_conn_heat.send([cycle_time, duty_cycle])
-                    parent_conn_cold.send([cycle_time, duty_cycle])
                 if mode == "boil":
                     display.showBoilMode()
                     print("boil selected")
@@ -454,19 +444,16 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
                     duty_cycle = 100 #full power to boil manage temperature
                     manage_boil_trigger = True
                     parent_conn_heat.send([cycle_time, duty_cycle])
-                    parent_conn_cold.send([cycle_time, duty_cycle])
                 if mode == "manual":
                     display.showManualMode()
                     print("manual selected")
                     duty_cycle = duty_cycle_temp
                     parent_conn_heat.send([cycle_time, duty_cycle])
-                    parent_conn_cold.send([cycle_time, duty_cycle])
                 if mode == "off":
                     display.showOffMode()
                     print("off selected")
                     duty_cycle = 0
                     parent_conn_heat.send([cycle_time, duty_cycle])
-                    parent_conn_cold.send([cycle_time, duty_cycle])
                 readyPOST = False
             time.sleep(.01)
         
