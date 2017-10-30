@@ -72,7 +72,7 @@ def index():
         return render_template(template_name, mode = param.status["mode"], set_point = param.status["set_point"], \
                                duty_cycle = param.status["duty_cycle"], cycle_time = param.status["cycle_time"], \
                                k_param = param.status["k_param"], i_param = param.status["i_param"], \
-                               d_param = param.status["d_param"])
+                               d_param = param.status["d_param"], is_cooling=param.status["is_cooling"])
         
     else: #request.method == 'POST' (first temp sensor / backwards compatibility)
         # get command from web browser or Android   
@@ -267,13 +267,14 @@ def unPackParamInitAndPost(paramStatus):
     num_pnts_smooth = paramStatus["num_pnts_smooth"]
     k_param = paramStatus["k_param"]
     i_param = paramStatus["i_param"] 
-    d_param = paramStatus["d_param"] 
+    d_param = paramStatus["d_param"]
+    is_cooling = paramStatus["is_cooling"]
     
     return mode, cycle_time, duty_cycle, boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, \
-           k_param, i_param, d_param
+           k_param, i_param, d_param, is_cooling
            
 def packParamGet(numTempSensors, myTempSensorNum, temp, tempUnits, elapsed, mode, cycle_time, duty_cycle, boil_duty_cycle, set_point, \
-                                 boil_manage_temp, num_pnts_smooth, k_param, i_param, d_param):
+                                 boil_manage_temp, num_pnts_smooth, k_param, i_param, d_param, is_cooling):
     
     param.status["numTempSensors"] = numTempSensors
     param.status["myTempSensorNum"] = myTempSensorNum
@@ -290,6 +291,7 @@ def packParamGet(numTempSensors, myTempSensorNum, temp, tempUnits, elapsed, mode
     param.status["k_param"] = k_param
     param.status["i_param"] = i_param
     param.status["d_param"] = d_param
+    param.status["is_cooling"] = is_cooling
 
     return param.status
         
@@ -297,7 +299,7 @@ def packParamGet(numTempSensors, myTempSensorNum, temp, tempUnits, elapsed, mode
 def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, statusQ, conn):
     
         mode, cycle_time, duty_cycle, boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, \
-        k_param, i_param, d_param = unPackParamInitAndPost(paramStatus)
+        k_param, i_param, d_param, is_cooling = unPackParamInitAndPost(paramStatus)
     
         p = current_process()
         print('Starting:', p.name, p.pid)
@@ -335,7 +337,7 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
 
         temp_ma = 0.0
 
-    #overwrite log file for new data log
+        #overwrite log file for new data log
         ff = open("brewery" + str(myTempSensor.sensorNum) + ".csv", "wb")
         ff.close()
 
@@ -401,7 +403,7 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
                 #put current status in queue
                 try:
                     paramStatus = packParamGet(numTempSensors, myTempSensor.sensorNum, temp_str, tempUnits, elapsed, mode, cycle_time, duty_cycle, \
-                            boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, k_param, i_param, d_param)
+                            boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, k_param, i_param, d_param, is_cooling)
                     statusQ.put(paramStatus) #GET request
                 except Full:
                     pass
@@ -434,7 +436,7 @@ def tempControlProc(myTempSensor, display, pinNum, readOnly, paramStatus, status
             while conn.poll(): #POST settings - Received POST from web browser or Android device
                 paramStatus = conn.recv()
                 mode, cycle_time, duty_cycle_temp, boil_duty_cycle, set_point, boil_manage_temp, num_pnts_smooth, \
-                k_param, i_param, d_param = unPackParamInitAndPost(paramStatus)
+                k_param, i_param, d_param, is_cooling = unPackParamInitAndPost(paramStatus)
 
                 readyPOST = True
             if readyPOST == True:
